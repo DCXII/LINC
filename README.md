@@ -1,4 +1,4 @@
-# LINC (Live Interactive Ngrok Connection)
+# LINC 
 
 A secure, end-to-end encrypted TCP chat application built with Node.js. It uses `ngrok` to create secure, shareable chat rooms accessible from anywhere.
 
@@ -25,10 +25,6 @@ A secure, end-to-end encrypted TCP chat application built with Node.js. It uses 
 2.  **Install `ngrok`:**
     LINC uses `ngrok` to create secure public tunnels.
     * [Download the `ngrok` binary](https://ngrok.com/download) for your operating system.
-    * Unzip the file.
-    * (Recommended) Move the `ngrok` executable to your system's `PATH` so it can be run from any terminal.
-        * **On Linux/macOS:** `sudo mv ./ngrok /usr/local/bin/`
-        * **On Windows:** Add the folder containing `ngrok.exe` to your `Environment Variables`.
 
 ### Step 2: One-Time Setup
 
