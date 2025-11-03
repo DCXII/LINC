@@ -17,7 +17,7 @@ A secure, end-to-end encrypted TCP chat application built with Node.js. It uses 
 1.  **Install Node.js Packages:**
     Clone the repository and install the required `npm` packages.
     ```bash
-    git clone [https://github.com/DCXII/LINC.git](https://github.com/DCXII/LINC.git)
+    git clone https://github.com/DCXII/LINC.git
     cd LINC
     npm install
     ```
