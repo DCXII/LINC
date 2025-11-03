@@ -8,8 +8,6 @@
 |-----<SECURE CLI COMMS>----|
 ```
 
-### |-----\<SECURE CLI COMMS\>----|
-
 LINC is a private, secret chat room you can run on your computer. You can invite your friends to join from anywhere in the world using a secret code.
 
 Because you run it yourself, your chats are end-to-end encrypted and secure.
