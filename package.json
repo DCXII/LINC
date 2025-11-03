@@ -1,0 +1,31 @@
+{
+  "name": "irc-chat-app",
+  "version": "1.0.0",
+  "description": "IRC-style CLI chat and file sharing application",
+  "main": "launcher.js",
+  "bin": {
+    "chat": "./launcher.js"
+  },
+  "scripts": {
+    "start": "node tcp-launcher.js",
+    "client": "node client.js",
+    "tcp-server": "node tcp-server.js",
+    "tcp-client": "node tcp-client.js",
+    "tcp": "node tcp-launcher.js"
+  },
+  "keywords": [
+    "chat",
+    "irc",
+    "cli",
+    "messaging",
+    "file-sharing"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

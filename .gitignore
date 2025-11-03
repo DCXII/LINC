@@ -1,0 +1,6 @@
+node_modules/
+*.pem
+uploads/
+downloads/
+.DS_Store
+Thumbs.db
