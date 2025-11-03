@@ -1,4 +1,4 @@
-# LINC <Secure CLI Comms>
+# LINC (Live Interactive Ngrok Connection)
 
 A secure, end-to-end encrypted TCP chat application built with Node.js. It uses `ngrok` to create secure, shareable chat rooms accessible from anywhere.
 
@@ -12,30 +12,45 @@ A secure, end-to-end encrypted TCP chat application built with Node.js. It uses 
 
 ## How to Run
 
-1.  **Clone & Install:**
+### Step 1: Install Dependencies
+
+1.  **Install Node.js Packages:**
+    Clone the repository and install the required `npm` packages.
     ```bash
     git clone [https://github.com/DCXII/LINC.git](https://github.com/DCXII/LINC.git)
     cd LINC
     npm install
     ```
 
-2.  **Generate Security Keys (One-time setup):**
-    ```bash
-    openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "/C=XX/ST=State/L/City/O=Org/OU/Org/CN=localhost"
-    ```
+2.  **Install `ngrok`:**
+    LINC uses `ngrok` to create secure public tunnels.
+    * [Download the `ngrok` binary](https://ngrok.com/download) for your operating system.
+    * Unzip the file.
+    * (Recommended) Move the `ngrok` executable to your system's `PATH` so it can be run from any terminal.
+        * **On Linux/macOS:** `sudo mv ./ngrok /usr/local/bin/`
+        * **On Windows:** Add the folder containing `ngrok.exe` to your `Environment Variables`.
 
-3.  **Setup `ngrok` (One-time setup):**
-    * [Download `ngrok`](https://ngrok.com/download) and add it to your PATH.
-    * [Sign up for a free account](https://dashboard.ngrok.com/signup) and add your authtoken:
+### Step 2: One-Time Setup
+
+1.  **Authenticate `ngrok`:**
+    [Sign up for a free `ngrok` account](https://dashboard.ngrok.com/signup) to get your authtoken. Run the following command (you only need to do this once):
     ```bash
     ngrok config add-authtoken <YOUR_TOKEN>
     ```
 
-4.  **Run LINC:**
+2.  **Generate Security Keys:**
+    LINC requires `openssl` (usually pre-installed on Linux/macOS) to create security certificates.
     ```bash
-    node tcp-launcher.js
+    openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "/C=XX/ST=State/L/City/O=Org/OU/Org/CN=localhost"
     ```
-    or
-    ```bash
-    npm start
-    ```
+
+### Step 3: Run LINC
+
+You're all set! Just run the launcher:
+```bash
+node tcp-launcher.js
+```
+or
+```
+npm start
+```
