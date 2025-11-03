@@ -2,5 +2,7 @@ node_modules/
 *.pem
 uploads/
 downloads/
+package-lock.json
+server-registry.json
 .DS_Store
 Thumbs.db
