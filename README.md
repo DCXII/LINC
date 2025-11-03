@@ -35,3 +35,7 @@ A secure, end-to-end encrypted TCP chat application built with Node.js. It uses 
     ```bash
     node tcp-launcher.js
     ```
+    or
+    ```bash
+    npm start
+    ```
