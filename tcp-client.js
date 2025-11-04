@@ -1,5 +1,7 @@
 const tls = require('tls');
 const readline = require('readline');
+const fs = require('fs');
+const path = require('path');
 
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORT = 2323;
@@ -21,9 +23,67 @@ function print(message, color = colors.reset) {
 
 let clientRL = null;
 let currentPrompt = '';
+let fileBuffer = '';
+let isReceivingFile = false;
 
-// --- THIS IS THE FIX ---
+function handleFileDownload(line) {
+  if (line.startsWith('::FILE_START::')) {
+    isReceivingFile = true;
+    fileBuffer = line;
+    return true;
+  }
+  
+  if (isReceivingFile) {
+    fileBuffer += line;
+    if (line.endsWith('::FILE_END::')) {
+      isReceivingFile = false;
+      
+      try {
+        const parts = fileBuffer.split('::');
+        const filename = parts[2];
+        const base64Data = parts[3];
+        
+        const dlDir = path.join(process.cwd(), 'downloads');
+        if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir, { recursive: true });
+        
+        let final = filename;
+        let n = 1;
+        const ext = path.extname(filename);
+        const base = path.basename(filename, ext);
+        let dest = path.join(dlDir, final);
+        
+        while (fs.existsSync(dest)) {
+          final = `${base}_${n}${ext}`;
+          dest = path.join(dlDir, final);
+          n++;
+        }
+        
+        const data = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(dest, data);
+        
+        const kb = (data.length / 1024).toFixed(2);
+        const successMsg = `\n${colors.green}[SERVER] Downloaded: ${final} (${kb} KB)${colors.reset}\n   ${colors.dim}Saved to: ${dest}${colors.reset}\n`;
+        
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        process.stdout.write(successMsg);
+        clientRL.prompt(true);
+        
+      } catch (e) {
+        process.stdout.write(`\n${colors.red}[SERVER] File download failed: ${e.message}${colors.reset}\n`);
+        clientRL.prompt(true);
+      }
+      
+      fileBuffer = '';
+    }
+    return true;
+  }
+  return false;
+}
+
 function handleServerMessage(message) {
+  if (handleFileDownload(message)) return;
+
   if (!clientRL) {
     if (message.startsWith('Username: ')) {
       setupInterface(message);
@@ -64,8 +124,6 @@ function setupInterface(initialPrompt) {
   clientRL.setPrompt(currentPrompt);
 
   clientRL.on('line', (line) => {
-    // This is a bit of a hack, but we need the socket
-    // The socket is attached to the main client object
     if (global.tcpSocket) {
       global.tcpSocket.write(line + '\n');
     }
@@ -80,8 +138,6 @@ function setupInterface(initialPrompt) {
   
   clientRL.prompt();
 }
-// --- END OF FIX ---
-
 
 class TCPChatClient {
   constructor(host, port) {
@@ -104,7 +160,7 @@ class TCPChatClient {
 
       this.socket = tls.connect(options, () => {
         console.log('Connected! (Encrypted)');
-        global.tcpSocket = this.socket; // Make socket accessible to readline
+        global.tcpSocket = this.socket;
         resolve();
       });
 
@@ -137,10 +193,10 @@ class TCPChatClient {
 
 async function main() {
   console.clear();
-  print('██╗     ██╗███╗   ██╗ ██████╗', colors.cyan);
-  print('██║     ██║████╗  ██║██╔════╝', colors.cyan);
-  print('██║     ██║██╔██╗ ██║██║     ', colors.cyan);
-  print('██║     ██║██║╚██╗██║██║     ', colors.cyan);
+  print('██╗    ██╗███╗   ██╗ ██████╗', colors.cyan);
+  print('██║    ██║████╗  ██║██╔════╝', colors.cyan);
+  print('██║    ██║██╔██╗ ██║██║     ', colors.cyan);
+  print('██║    ██║██║╚██╗██║██║     ', colors.cyan);
   print('███████╗██║██║ ╚████║╚██████╗', colors.cyan);
   print('╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝', colors.cyan);
   print('                                    ', colors.cyan);
