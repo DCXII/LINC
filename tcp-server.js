@@ -143,7 +143,7 @@ class ChatServer {
         case 'acceptall': this.cmdAcceptAll(socket); break;
         case 'declineall': this.cmdDeclineAll(socket); break;
         case 'quit': case 'exit': this.write(socket, 'Bye!'); socket.end(); break;
-        default: this.write(socket, `${colors.red}[SERVER] Unknown: /${cmd}${colors.reset}`); break;
+        default: this.write(socket, `${colors.red}[SERVER] Type /help for commands${colors.reset}`); break;
       }
     } else {
       if (client.room) {
