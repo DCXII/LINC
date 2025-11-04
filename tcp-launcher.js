@@ -29,10 +29,10 @@ function print(message, color = colors.reset) {
 
 function printBanner() {
   console.clear();
-  print('██╗    ██╗███╗   ██╗ ██████╗', colors.cyan);
-  print('██║    ██║████╗  ██║██╔════╝', colors.cyan);
-  print('██║    ██║██╔██╗ ██║██║     ', colors.cyan);
-  print('██║    ██║██║╚██╗██║██║     ', colors.cyan);
+  print('██╗     ██╗███╗   ██╗ ██████╗', colors.cyan);
+  print('██║     ██║████╗  ██║██╔════╝', colors.cyan);
+  print('██║     ██║██╔██╗ ██║██║     ', colors.cyan);
+  print('██║     ██║██║╚██╗██║██║     ', colors.cyan);
   print('███████╗██║██║ ╚████║╚██████╗', colors.cyan);
   print('╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝', colors.cyan);
   print('                                    ', colors.cyan);
@@ -216,12 +216,12 @@ async function startAsServer() {
 
     print('Secure Server is LIVE!\n', colors.green);
     print('╔════════════════════════════════════════════════════╗', colors.cyan);
-    print('║              SERVER IS PUBLIC                ║', colors.bright);
+    print('║              SERVER IS PUBLIC                      ║', colors.bright);
     print('╠════════════════════════════════════════════════════╣', colors.cyan);
     print('║                                                    ║', colors.cyan);
     print(`║  Tell friends to join with this Server Code:       ║`, colors.yellow);
     print('║                                                    ║', colors.cyan);
-    print(`║                   ${colors.bright}${serverCode}${colors.reset}${colors.cyan}                         ║`, colors.cyan);
+    print(`║                     ${colors.bright}${serverCode}${colors.reset}${colors.cyan}                         ║`, colors.cyan);
     print('║                                                    ║', colors.cyan);
     print('╚════════════════════════════════════════════════════╝\n', colors.cyan);
 
@@ -485,11 +485,8 @@ async function main() {
   printBanner();
 
   print('What would you like to do?', colors.bright);
-  print('');
   print('  1. Host a server (be the room creator)', colors.green);
-  print('');
   print('  2. Join a server (connect to existing)', colors.cyan);
-  print('');
   print('  3. Exit', colors.red);
   print('\n');
 
