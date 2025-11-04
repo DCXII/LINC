@@ -196,10 +196,10 @@ class TCPChatClient {
 
 async function main() {
   console.clear();
-  print('██╗    ██╗███╗   ██╗ ██████╗', colors.cyan);
-  print('██║    ██║████╗  ██║██╔════╝', colors.cyan);
-  print('██║    ██║██╔██╗ ██║██║     ', colors.cyan);
-  print('██║    ██║██║╚██╗██║██║     ', colors.cyan);
+  print('██╗     ██╗███╗   ██╗ ██████╗', colors.cyan);
+  print('██║     ██║████╗  ██║██╔════╝', colors.cyan);
+  print('██║     ██║██╔██╗ ██║██║     ', colors.cyan);
+  print('██║     ██║██║╚██╗██║██║     ', colors.cyan);
   print('███████╗██║██║ ╚████║╚██████╗', colors.cyan);
   print('╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝', colors.cyan);
   print('                                    ', colors.cyan);
