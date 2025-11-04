@@ -29,10 +29,10 @@ function print(message, color = colors.reset) {
 
 function printBanner() {
   console.clear();
-  print('██╗     ██╗███╗   ██╗ ██████╗', colors.cyan);
-  print('██║     ██║████╗  ██║██╔════╝', colors.cyan);
-  print('██║     ██║██╔██╗ ██║██║     ', colors.cyan);
-  print('██║     ██║██║╚██╗██║██║     ', colors.cyan);
+  print('██╗    ██╗███╗   ██╗ ██████╗', colors.cyan);
+  print('██║    ██║████╗  ██║██╔════╝', colors.cyan);
+  print('██║    ██║██╔██╗ ██║██║     ', colors.cyan);
+  print('██║    ██║██║╚██╗██║██║     ', colors.cyan);
   print('███████╗██║██║ ╚████║╚██████╗', colors.cyan);
   print('╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝', colors.cyan);
   print('                                    ', colors.cyan);
@@ -216,12 +216,12 @@ async function startAsServer() {
 
     print('Secure Server is LIVE!\n', colors.green);
     print('╔════════════════════════════════════════════════════╗', colors.cyan);
-    print('║              SERVER IS PUBLIC                      ║', colors.bright);
+    print('║              SERVER IS PUBLIC                ║', colors.bright);
     print('╠════════════════════════════════════════════════════╣', colors.cyan);
     print('║                                                    ║', colors.cyan);
     print(`║  Tell friends to join with this Server Code:       ║`, colors.yellow);
     print('║                                                    ║', colors.cyan);
-    print(`║                   ${colors.bright}${serverCode}${colors.reset}${colors.cyan}                           ║`, colors.cyan);
+    print(`║                   ${colors.bright}${serverCode}${colors.reset}${colors.cyan}                         ║`, colors.cyan);
     print('║                                                    ║', colors.cyan);
     print('╚════════════════════════════════════════════════════╝\n', colors.cyan);
 
@@ -266,9 +266,67 @@ async function startAsServer() {
 
 let clientRL = null;
 let currentPrompt = '';
+let fileBuffer = '';
+let isReceivingFile = false;
 
-// --- THIS IS THE FIX ---
+function handleFileDownload(line) {
+  if (line.startsWith('::FILE_START::')) {
+    isReceivingFile = true;
+    fileBuffer = line;
+    return true;
+  }
+  
+  if (isReceivingFile) {
+    fileBuffer += line;
+    if (line.endsWith('::FILE_END::')) {
+      isReceivingFile = false;
+      
+      try {
+        const parts = fileBuffer.split('::');
+        const filename = parts[2];
+        const base64Data = parts[3];
+        
+        const dlDir = path.join(process.cwd(), 'downloads');
+        if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir, { recursive: true });
+        
+        let final = filename;
+        let n = 1;
+        const ext = path.extname(filename);
+        const base = path.basename(filename, ext);
+        let dest = path.join(dlDir, final);
+        
+        while (fs.existsSync(dest)) {
+          final = `${base}_${n}${ext}`;
+          dest = path.join(dlDir, final);
+          n++;
+        }
+        
+        const data = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(dest, data);
+        
+        const kb = (data.length / 1024).toFixed(2);
+        const successMsg = `\n${colors.green}[SERVER] Downloaded: ${final} (${kb} KB)${colors.reset}\n   ${colors.dim}Saved to: ${dest}${colors.reset}\n`;
+        
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        process.stdout.write(successMsg);
+        clientRL.prompt(true);
+        
+      } catch (e) {
+        process.stdout.write(`\n${colors.red}[SERVER] File download failed: ${e.message}${colors.reset}\n`);
+        clientRL.prompt(true);
+      }
+      
+      fileBuffer = '';
+    }
+    return true;
+  }
+  return false;
+}
+
 function handleClientMessage(message) {
+  if (handleFileDownload(message)) return;
+
   if (!clientRL) {
     if (message.startsWith('Username: ')) {
       setupClientInterface(message);
@@ -323,7 +381,6 @@ function setupClientInterface(initialPrompt) {
   
   clientRL.prompt();
 }
-// --- END OF FIX ---
 
 async function connectAsClient(host, port) {
   return new Promise((resolve, reject) => {
@@ -427,7 +484,9 @@ async function main() {
   print('What would you like to do?', colors.bright);
   print('');
   print('  1. Host a server (be the room creator)', colors.green);
+  print('');
   print('  2. Join a server (connect to existing)', colors.cyan);
+  print('');
   print('  3. Exit', colors.red);
   print('\n');
 
