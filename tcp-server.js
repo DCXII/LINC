@@ -140,8 +140,10 @@ class ChatServer {
         case 'part': case 'leave': this.cmdLeave(socket); break;
         case 'accept': this.cmdAccept(socket, argString); break;
         case 'decline': this.cmdDecline(socket, argString); break;
+        case 'acceptall': this.cmdAcceptAll(socket); break;
+        case 'declineall': this.cmdDeclineAll(socket); break;
         case 'quit': case 'exit': this.write(socket, 'Bye!'); socket.end(); break;
-        default: this.write(socket, `${colors.red}[SERVER] Type /help for commands${colors.reset}`); break;
+        default: this.write(socket, `${colors.red}[SERVER] Unknown: /${cmd}${colors.reset}`); break;
       }
     } else {
       if (client.room) {
@@ -167,6 +169,8 @@ class ChatServer {
         this.write(socket, `  ${colors.cyan}/bans${colors.reset}         List bans (owner)`);
         this.write(socket, `  ${colors.cyan}/accept <u>${colors.reset}   Accept user (owner)`);
         this.write(socket, `  ${colors.cyan}/decline <u>${colors.reset}  Decline user (owner)`);
+        this.write(socket, `  ${colors.cyan}/acceptall${colors.reset}  Accept all (owner)`);
+        this.write(socket, `  ${colors.cyan}/declineall${colors.reset} Decline all (owner)`);
       }
       this.write(socket, `  ${colors.cyan}/names${colors.reset}        List users`);
       this.write(socket, `  ${colors.cyan}/share <file>${colors.reset} Share file`);
@@ -238,11 +242,32 @@ class ChatServer {
       this.write(room.owner, `${colors.cyan}[SERVER] Type /accept ${client.username} or /decline ${client.username}${colors.reset}`);
     }
   }
+  
+  _acceptUser(room, pendingUser) {
+    room.users.push(pendingUser);
+    room.approved.push(pendingUser.username);
+    
+    const targetClient = clients.get(pendingUser.socket);
+    targetClient.room = room.name;
+    targetClient.isOwner = false;
+
+    this.write(pendingUser.socket, `${colors.green}[SERVER] Owner accepted your request. Joined #${room.name}${colors.reset}`);
+    
+    if (room.topic) {
+      this.write(pendingUser.socket, `${colors.magenta}[SERVER] Topic: ${room.topic}${colors.reset}`);
+    }
+    
+    const userList = room.users.map(u => u.username).join(', ');
+    this.write(pendingUser.socket, `${colors.dim}[SERVER] Users: ${userList}${colors.reset}`);
+
+    this.broadcast(room.name, `*** ${pendingUser.username} joined`);
+  }
 
   cmdAccept(socket, username) {
     const client = clients.get(socket);
     if (!client.room) return;
     const room = rooms.get(client.room);
+    room.name = client.room;
 
     if (room.owner !== socket) {
       this.write(socket, `${colors.red}[SERVER] Owner only${colors.reset}`);
@@ -256,23 +281,35 @@ class ChatServer {
     }
     
     room.pending = room.pending.filter(u => u.username !== username);
-    room.users.push(pendingUser);
-    room.approved.push(pendingUser.username);
-    
-    const targetClient = clients.get(pendingUser.socket);
-    targetClient.room = client.room;
-    targetClient.isOwner = false;
+    this._acceptUser(room, pendingUser);
+  }
+  
+  cmdAcceptAll(socket) {
+    const client = clients.get(socket);
+    if (!client.room) return;
+    const room = rooms.get(client.room);
+    room.name = client.room;
 
-    this.write(pendingUser.socket, `${colors.green}[SERVER] Owner accepted your request. Joined #${client.room}${colors.reset}`);
-    
-    if (room.topic) {
-      this.write(pendingUser.socket, `${colors.magenta}[SERVER] Topic: ${room.topic}${colors.reset}`);
+    if (room.owner !== socket) {
+      this.write(socket, `${colors.red}[SERVER] Owner only${colors.reset}`);
+      return;
+    }
+
+    if (room.pending.length === 0) {
+      this.write(socket, `${colors.yellow}[SERVER] No users are pending.${colors.reset}`);
+      return;
     }
     
-    const userList = room.users.map(u => u.username).join(', ');
-    this.write(pendingUser.socket, `${colors.dim}[SERVER] Users: ${userList}${colors.reset}`);
-
-    this.broadcast(client.room, `*** ${username} joined`);
+    this.write(socket, `${colors.green}[SERVER] Accepting all pending users...${colors.reset}`);
+    
+    [...room.pending].forEach(pendingUser => {
+      this._acceptUser(room, pendingUser);
+    });
+    room.pending = [];
+  }
+  
+  _declineUser(room, pendingUser, ownerUsername) {
+     this.write(pendingUser.socket, `${colors.red}[SERVER] Owner (${ownerUsername}) declined your request.${colors.reset}`);
   }
   
   cmdDecline(socket, username) {
@@ -293,8 +330,31 @@ class ChatServer {
     
     room.pending = room.pending.filter(u => u.username !== username);
     
-    this.write(pendingUser.socket, `${colors.red}[SERVER] Owner declined your request.${colors.reset}`);
+    this._declineUser(room, pendingUser, client.username);
     this.write(socket, `${colors.yellow}[SERVER] You declined ${username}.${colors.reset}`);
+  }
+  
+  cmdDeclineAll(socket) {
+    const client = clients.get(socket);
+    if (!client.room) return;
+    const room = rooms.get(client.room);
+
+    if (room.owner !== socket) {
+      this.write(socket, `${colors.red}[SERVER] Owner only${colors.reset}`);
+      return;
+    }
+    
+    if (room.pending.length === 0) {
+      this.write(socket, `${colors.yellow}[SERVER] No users are pending.${colors.reset}`);
+      return;
+    }
+    
+    this.write(socket, `${colors.red}[SERVER] Declining all pending users...${colors.reset}`);
+    
+    [...room.pending].forEach(pendingUser => {
+      this._declineUser(room, pendingUser, client.username);
+    });
+    room.pending = [];
   }
 
   cmdList(socket) {
@@ -474,7 +534,7 @@ class ChatServer {
 
       const kb = (data.length / 1024).toFixed(2);
       this.write(socket, `${colors.green}[SERVER] Shared: ${final} (${kb} KB)${colors.reset}`);
-      this.broadcast(client.room, `*** ${client.username} shared: ${final} (${kb} KB), to download use /get ${final}`, socket);
+      this.broadcast(client.room, `*** ${client.username} shared: ${final} (${kb} KB)`, socket);
     } catch (e) {
       this.write(socket, `${colors.red}[SERVER] Error: ${e.message}${colors.reset}`);
     }
@@ -507,28 +567,10 @@ class ChatServer {
 
     try {
       const data = fs.readFileSync(src);
-      const dlDir = path.join(process.cwd(), 'downloads');
-      if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir, { recursive: true });
-      
-      let final = filename;
-      let n = 1;
-      const ext = path.extname(filename);
-      const base = path.basename(filename, ext);
-      let dest = path.join(dlDir, final);
-      
-      while (fs.existsSync(dest)) {
-        final = `${base}_${n}${ext}`;
-        dest = path.join(dlDir, final);
-        n++;
-      }
-      
-      fs.writeFileSync(dest, data);
-      
-      const kb = (data.length / 1024).toFixed(2);
-      this.write(socket, `\n${colors.green}[SERVER] Downloaded: ${final} (${kb} KB)${colors.reset}`);
-      this.write(socket, `   ${colors.dim}Saved to: ${dest}${colors.reset}\n`);
+      const base64Data = data.toString('base64');
+      this.write(socket, `::FILE_START::${filename}::${base64Data}::FILE_END::`);
     } catch (e) {
-      this.write(socket, `${colors.red}[SERVER] Error: ${e.message}${colors.reset}`);
+      this.write(socket, `${colors.red}[SERVER] Error reading file: ${e.message}${colors.reset}`);
     }
   }
 
