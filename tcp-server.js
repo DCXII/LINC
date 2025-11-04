@@ -534,7 +534,7 @@ class ChatServer {
 
       const kb = (data.length / 1024).toFixed(2);
       this.write(socket, `${colors.green}[SERVER] Shared: ${final} (${kb} KB)${colors.reset}`);
-      this.broadcast(client.room, `*** ${client.username} shared: ${final} (${kb} KB)`, socket);
+      this.broadcast(client.room, `*** ${client.username} shared: ${final} (${kb} KB) \n to download use: /get ${final}`, socket);
     } catch (e) {
       this.write(socket, `${colors.red}[SERVER] Error: ${e.message}${colors.reset}`);
     }
