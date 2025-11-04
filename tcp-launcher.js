@@ -273,54 +273,57 @@ function handleFileDownload(line) {
   if (line.startsWith('::FILE_START::')) {
     isReceivingFile = true;
     fileBuffer = line;
+  } else if (isReceivingFile) {
+    fileBuffer += line;
+  }
+
+  if (isReceivingFile && fileBuffer.endsWith('::FILE_END::')) {
+    isReceivingFile = false;
+    
+    try {
+      const parts = fileBuffer.split('::');
+      const filename = parts[2];
+      const base64Data = parts[3];
+      
+      const dlDir = path.join(process.cwd(), 'downloads');
+      if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir, { recursive: true });
+      
+      let final = filename;
+      let n = 1;
+      const ext = path.extname(filename);
+      const base = path.basename(filename, ext);
+      let dest = path.join(dlDir, final);
+      
+      while (fs.existsSync(dest)) {
+        final = `${base}_${n}${ext}`;
+        dest = path.join(dlDir, final);
+        n++;
+      }
+      
+      const data = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(dest, data);
+      
+      const kb = (data.length / 1024).toFixed(2);
+      const successMsg = `\n${colors.green}[SERVER] Downloaded: ${final} (${kb} KB)${colors.reset}\n   ${colors.dim}Saved to: ${dest}${colors.reset}\n`;
+      
+      readline.clearLine(process.stdout, 0);
+      readline.cursorTo(process.stdout, 0);
+      process.stdout.write(successMsg);
+      if (clientRL) clientRL.prompt(true);
+      
+    } catch (e) {
+      process.stdout.write(`\n${colors.red}[SERVER] File download failed: ${e.message}${colors.reset}\n`);
+      if (clientRL) clientRL.prompt(true);
+    }
+    
+    fileBuffer = '';
+    return true;
+  }
+
+  if (isReceivingFile) {
     return true;
   }
   
-  if (isReceivingFile) {
-    fileBuffer += line;
-    if (line.endsWith('::FILE_END::')) {
-      isReceivingFile = false;
-      
-      try {
-        const parts = fileBuffer.split('::');
-        const filename = parts[2];
-        const base64Data = parts[3];
-        
-        const dlDir = path.join(process.cwd(), 'downloads');
-        if (!fs.existsSync(dlDir)) fs.mkdirSync(dlDir, { recursive: true });
-        
-        let final = filename;
-        let n = 1;
-        const ext = path.extname(filename);
-        const base = path.basename(filename, ext);
-        let dest = path.join(dlDir, final);
-        
-        while (fs.existsSync(dest)) {
-          final = `${base}_${n}${ext}`;
-          dest = path.join(dlDir, final);
-          n++;
-        }
-        
-        const data = Buffer.from(base64Data, 'base64');
-        fs.writeFileSync(dest, data);
-        
-        const kb = (data.length / 1024).toFixed(2);
-        const successMsg = `\n${colors.green}[SERVER] Downloaded: ${final} (${kb} KB)${colors.reset}\n   ${colors.dim}Saved to: ${dest}${colors.reset}\n`;
-        
-        readline.clearLine(process.stdout, 0);
-        readline.cursorTo(process.stdout, 0);
-        process.stdout.write(successMsg);
-        clientRL.prompt(true);
-        
-      } catch (e) {
-        process.stdout.write(`\n${colors.red}[SERVER] File download failed: ${e.message}${colors.reset}\n`);
-        clientRL.prompt(true);
-      }
-      
-      fileBuffer = '';
-    }
-    return true;
-  }
   return false;
 }
 
