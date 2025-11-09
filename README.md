@@ -83,7 +83,7 @@ Username: alice
 
 -----
 
-## How to Get Started (for a 10-Year-Old\!)
+## How to Get Started (!)
 
 Follow these 3 steps to get LINC working. You only have to do most of these once\!
 
